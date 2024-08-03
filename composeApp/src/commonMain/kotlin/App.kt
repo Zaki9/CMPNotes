@@ -9,29 +9,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jetbrains.cmp.notes.database.Note
+import com.jetbrains.cmp.notes.ui.theme.NotesAppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
+import androidx.compose.material3.Surface
 
 @Composable
 @Preview
-fun App() {
-    MaterialTheme {
+fun App(
+    darkTheme: Boolean,
+    dynamicColor: Boolean,
+) {
+    NotesAppTheme(darkTheme, dynamicColor) {
         KoinContext {
             NotesHome()
         }
@@ -40,32 +41,26 @@ fun App() {
 
 @Composable
 fun NotesHome() {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                backgroundColor = Color.Black,
-                contentColor = Color.White
-            ) {
-
-            }
-        }
-    ) {
+    Scaffold {
         Surface(
-            modifier = Modifier.fillMaxSize(1f),
-            color = Color.Black
+            tonalElevation = 5.dp,
+            modifier = Modifier.fillMaxSize(1f)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Notes", fontSize = 32.sp, color = Color.White)
-                Spacer(Modifier.size(16.dp))
+                Text(
+                    "Notes",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.size(24.dp))
                 ListRow(
                     modifier = Modifier
                 )
                 Spacer(Modifier.size(16.dp))
                 NotesCard(
-                    Note(0, "HEy this is my first notw")
+                    Note(0, "HEy this is my first")
                 )
                 Spacer(Modifier.size(16.dp))
-
                 NotesCard(
                     Note(
                         0,
@@ -97,14 +92,17 @@ fun ListRow(modifier: Modifier) {
 @Composable
 fun Label(labelText: String) {
     Box(
-        modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color.White)
+        modifier = Modifier.clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .padding(8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = labelText,
             textAlign = TextAlign.Center,
-            color = Color.Black,
+            color =
+            MaterialTheme.colorScheme.secondary,
+            style = MaterialTheme.typography.labelMedium,
             fontSize = 14.sp
         )
     }
@@ -112,19 +110,25 @@ fun Label(labelText: String) {
 
 @Composable
 fun NotesCard(note: Note) {
-    Card(
+    androidx.compose.material3.Card(
         modifier =
         Modifier.clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .fillMaxWidth()
             .padding(8.dp),
 
         ) {
-        Column {
+        Column(
+            Modifier
+                .background(MaterialTheme.colorScheme.secondaryContainer)
+                .fillMaxWidth().padding(8.dp)
+
+        ) {
             Text(
                 text = note.noteMessage,
                 textAlign = TextAlign.Start,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleLarge,
                 fontSize = 24.sp,
                 maxLines = 1,
                 fontWeight = FontWeight.Bold
@@ -133,9 +137,11 @@ fun NotesCard(note: Note) {
             Text(
                 text = note.noteMessage,
                 textAlign = TextAlign.Start,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyLarge,
                 fontSize = 14.sp,
-                maxLines = 3
+                maxLines = 3,
+                fontWeight = FontWeight.Bold
             )
         }
     }
