@@ -1,5 +1,9 @@
 package com.jetbrains.cmp.notes.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jetbrains.cmp.notes.database.Note
@@ -8,21 +12,24 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel() {
-    init {
-        viewModelScope.launch {
-            addNotes()
-            notesRepository.fetchFromRepo().collectLatest {
+    val toggleToolbar = mutableStateOf(true)
+    var notesText = mutableStateOf("")
 
-                println("sizeeee of mine is".plus(it.size))
-            }
-        }
+    fun toggle() {
+        toggleToolbar.value = !toggleToolbar.value
     }
 
-    suspend fun addNotes() {
-        notesRepository.addNotes(
-            Note(
-                noteMessage = "Hey man"
-            )
-        )
+    suspend fun fetchNotes() = notesRepository.fetchFromRepo()
+    fun addNotes() {
+        viewModelScope.launch {
+            if (notesText.value.isNotBlank()) {
+                notesRepository.addNotes(
+                    Note(
+                        noteMessage = (notesText.value)
+                    )
+                )
+                notesText.value = ""
+            }
+        }
     }
 }

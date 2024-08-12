@@ -1,30 +1,35 @@
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.jetbrains.cmp.notes.database.Note
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.jetbrains.cmp.notes.NoteEditor
+import com.jetbrains.cmp.notes.NotesListScreen
 import com.jetbrains.cmp.notes.ui.theme.NotesAppTheme
+import com.jetbrains.cmp.notes.utils.koinInjectViewModel
+import com.jetbrains.cmp.notes.viewmodel.NotesViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
-import androidx.compose.material3.Surface
 
 @Composable
 @Preview
@@ -41,108 +46,90 @@ fun App(
 
 @Composable
 fun NotesHome() {
-    Scaffold {
+    val navController = rememberNavController()
+    val notesViewModel = koinInjectViewModel<NotesViewModel>()
+
+    Scaffold(
+        topBar = {
+            TopAppBarComposable(navController, notesViewModel)
+        },
+        floatingActionButton = {
+            if (notesViewModel.toggleToolbar.value) {
+                FloatingActionButton(
+                    onClick = {
+                        notesViewModel.toggle()
+                        navController.navigate("note_edit")
+                    },
+                ) {
+                    Icon(Icons.Filled.Add, "Floating action button.")
+                }
+            }
+        }
+    ) {
         Surface(
-            tonalElevation = 5.dp,
-            modifier = Modifier.fillMaxSize(1f)
+            modifier = Modifier.fillMaxSize(1f),
+            color = MaterialTheme.colorScheme.background,
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            NavHost(navController, startDestination = "home") {
+                composable("home") {
+                    NotesListScreen(navController, viewmodel = notesViewModel)
+                }
+                composable("note_edit") {
+                    NoteEditor(viewmodel = notesViewModel)
+                }
+            }
+
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TopAppBarComposable(
+    navController: NavHostController,
+    notesViewModel: NotesViewModel
+) {
+    val toolBarState by notesViewModel.toggleToolbar
+
+    TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background
+        ),
+        navigationIcon = {
+            if (!toolBarState) {
+                IconButton(onClick = {
+                    notesViewModel.toggle()
+                    navController.popBackStack()
+                }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Navigation icon"
+                    )
+                }
+            }
+        },
+        title = {
+            if (toolBarState) {
                 Text(
                     "Notes",
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(Modifier.size(24.dp))
-                ListRow(
-                    modifier = Modifier
-                )
-                Spacer(Modifier.size(16.dp))
-                NotesCard(
-                    Note(0, "HEy this is my first")
-                )
-                Spacer(Modifier.size(16.dp))
-                NotesCard(
-                    Note(
-                        0,
-                        "HEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notwHEy this is my first notw"
-                    )
+            }
+        },
+        actions = {
+            if (!toolBarState) {
+                Text(
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                        .padding(horizontal = 16.dp).clickable {
+                            notesViewModel.addNotes()
+                            notesViewModel.toggle()
+                            navController.popBackStack()
+                        },
+                    text = "Done",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun ListRow(modifier: Modifier) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Label(
-            labelText = "Top 20"
-        )
-        Label(
-            labelText = "BookMarked"
-        )
-        Label(
-            labelText = "Important"
-        )
-    }
-}
-
-@Composable
-fun Label(labelText: String) {
-    Box(
-        modifier = Modifier.clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .padding(8.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = labelText,
-            textAlign = TextAlign.Center,
-            color =
-            MaterialTheme.colorScheme.secondary,
-            style = MaterialTheme.typography.labelMedium,
-            fontSize = 14.sp
-        )
-    }
-}
-
-@Composable
-fun NotesCard(note: Note) {
-    androidx.compose.material3.Card(
-        modifier =
-        Modifier.clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .fillMaxWidth()
-            .padding(8.dp),
-
-        ) {
-        Column(
-            Modifier
-                .background(MaterialTheme.colorScheme.secondaryContainer)
-                .fillMaxWidth().padding(8.dp)
-
-        ) {
-            Text(
-                text = note.noteMessage,
-                textAlign = TextAlign.Start,
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 24.sp,
-                maxLines = 1,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.size(8.dp))
-            Text(
-                text = note.noteMessage,
-                textAlign = TextAlign.Start,
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyLarge,
-                fontSize = 14.sp,
-                maxLines = 3,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
+        })
 }
