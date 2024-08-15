@@ -15,6 +15,6 @@ interface NotesDao {
     @Delete
     suspend fun delete(note: Note)
 
-    @Query("SELECT * from Note")
+    @Query("SELECT * from Note ORDER BY timeStamp desc")
     fun fetchAllNotes(): Flow<List<Note>>
 }

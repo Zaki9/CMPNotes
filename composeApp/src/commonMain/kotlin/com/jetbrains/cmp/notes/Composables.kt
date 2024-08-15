@@ -2,22 +2,29 @@ package com.jetbrains.cmp.notes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.FractionalThreshold
 import androidx.compose.material.Text
+import androidx.compose.material.rememberSwipeableState
+import androidx.compose.material.swipeable
 import androidx.compose.material3.Card
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -32,15 +39,51 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.jetbrains.cmp.notes.database.Note
 import com.jetbrains.cmp.notes.viewmodel.NotesViewModel
 import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.roundToInt
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun SwipeableSample(composable: @Composable () -> Unit) {
+    val squareSize = 100.dp
+    val swipeableState = rememberSwipeableState(0)
+    val sizePx = with(LocalDensity.current) { squareSize.toPx() }
+    val anchors = mapOf(0f to 0,-sizePx to 2) // Maps anchor points (in px) to states
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .clip(RoundedCornerShape(16.dp))
+            .swipeable(
+                state = swipeableState,
+                anchors = anchors,
+                thresholds = { _, _ -> FractionalThreshold(0.3f) },
+                orientation = Orientation.Horizontal,
+            ).background(MaterialTheme.colorScheme.secondary)
+
+    ) {
+        Box(
+            Modifier
+                .offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
+                .fillMaxSize(1f)
+        )
+        { composable.invoke() }
+    }
+}
+
 
 @Composable
 fun NoteEditor(modifier: Modifier = Modifier, viewmodel: NotesViewModel) {
@@ -90,7 +133,7 @@ fun NotesListScreen(
         }
     }
     Column(
-        modifier = modifier.padding(16.dp).verticalScroll(
+        modifier = modifier.padding(vertical = 16.dp).verticalScroll(
             rememberScrollState()
         ), verticalArrangement = Arrangement.SpaceBetween) {
         Column {
@@ -148,6 +191,7 @@ fun Label(labelText: String) {
 
 @Composable
 fun NotesCard(note: Note, launchEditScreen: (Int) -> Unit) {
+    SwipeableSample(){
     Card(
         modifier =
         Modifier.clip(RoundedCornerShape(16.dp))
@@ -181,7 +225,7 @@ fun NotesCard(note: Note, launchEditScreen: (Int) -> Unit) {
                 fontSize = 14.sp,
                 maxLines = 3,
                 fontWeight = FontWeight.Bold
-            )
+            )}
         }
     }
 }
