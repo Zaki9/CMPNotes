@@ -30,4 +30,16 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
             }
         }
     }
+
+    fun deleteNote(note: Note) {
+        viewModelScope.launch {
+            notesRepository.deleteNote(note)
+        }
+    }
+
+    fun markImportant(note: Note) {
+        viewModelScope.launch {
+            notesRepository.addNotes(note.apply { markImp = true })
+        }
+    }
 }
