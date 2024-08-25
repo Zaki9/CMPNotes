@@ -5,18 +5,33 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jetbrains.cmp.notes.database.Note
 import com.jetbrains.cmp.notes.repository.NotesRepository
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
 class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel() {
     val toggleToolbar = mutableStateOf(true)
     var notesText = mutableStateOf("")
+    var notesList = mutableStateOf(listOf<Note>())
 
     fun toggle() {
         toggleToolbar.value = !toggleToolbar.value
     }
+    fun fetchNotes() {
+        viewModelScope.launch {
+            notesRepository.fetchFromRepo().collectLatest {
+                notesList.value = it
+            }
+        }
+    }
 
-    fun fetchNotes() = notesRepository.fetchFromRepo()
+    fun fetchImpNotes() {
+        viewModelScope.launch {
+            notesRepository.fetchImpNotes().collectLatest {
+                notesList.value = it
+            }
+        }
+    }
     fun addNotes() {
         viewModelScope.launch {
             if (notesText.value.isNotBlank()) {
@@ -39,7 +54,7 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
 
     fun markImportant(note: Note) {
         viewModelScope.launch {
-            notesRepository.addNotes(note.apply { markImp = true })
+            notesRepository.addNotes(note.apply { markImp = !markImp })
         }
     }
 }

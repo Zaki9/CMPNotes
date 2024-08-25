@@ -12,11 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -30,10 +30,8 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,7 +46,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.jetbrains.cmp.notes.database.Note
 import com.jetbrains.cmp.notes.viewmodel.NotesViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun NoteEditor(modifier: Modifier = Modifier, viewmodel: NotesViewModel) {
@@ -75,7 +72,8 @@ fun NoteEditor(modifier: Modifier = Modifier, viewmodel: NotesViewModel) {
 fun NotesListScreen(
     navController: NavController, modifier: Modifier = Modifier, viewmodel: NotesViewModel,
 ) {
-    val mNotes by viewmodel.fetchNotes().collectAsState(listOf())
+    LaunchedEffect(Unit){ viewmodel.fetchNotes() }
+    val mNotes by remember { viewmodel.notesList }
     if (mNotes.isEmpty()) {
         Box(
             modifier.fillMaxSize(1f),
@@ -92,14 +90,13 @@ fun NotesListScreen(
         }
     }
     Column(
-        modifier = modifier.padding(vertical = 16.dp).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.SpaceBetween
+        modifier = modifier.padding(16.dp),
+        verticalArrangement = Arrangement.Top
     ) {
-        Column {
-            Spacer(modifier.size(24.dp))
-            ListRow()
-            Spacer(modifier.size(16.dp))
-            mNotes.forEach {
+        ListRow(viewmodel)
+        Spacer(modifier.size(16.dp))
+        LazyColumn {
+            items(mNotes, key = { it.id }) {
                 NotesCard(
                     it, {
                         viewmodel.toggle()
@@ -116,32 +113,35 @@ fun NotesListScreen(
 }
 
 @Composable
-fun ListRow() {
+fun ListRow(viewmodel: NotesViewModel) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Label(
-            labelText = "Top 20"
-        )
+            labelText = "Top 20",
+        ){
+            viewmodel.fetchNotes()
+        }
         Label(
             labelText = "Important"
-        )
+        ){
+            viewmodel.fetchImpNotes()
+        }
     }
 }
 
 @Composable
-fun Label(labelText: String) {
+fun Label(labelText: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier.clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.secondaryContainer)
-            .padding(8.dp),
+            .padding(8.dp).clickable { onClick.invoke() },
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = labelText,
             textAlign = TextAlign.Center,
-            color =
-            MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.secondary,
             style = MaterialTheme.typography.labelMedium,
             fontSize = 14.sp
         )
@@ -162,12 +162,10 @@ fun NotesCard(
                     deleteNote.invoke()
                     return@rememberSwipeToDismissBoxState false
                 }
-
                 SwipeToDismissBoxValue.StartToEnd -> {
                     markImp.invoke()
                     return@rememberSwipeToDismissBoxState false
                 }
-
                 else -> {}
             }
             return@rememberSwipeToDismissBoxState true
@@ -184,7 +182,6 @@ fun NotesCard(
                     SwipeToDismissBoxValue.EndToStart -> Color.Red
                 }, label = "Changing color"
             )
-
             Row(
                 Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)).background(color)
                     .padding(horizontal = 16.dp),
@@ -194,7 +191,6 @@ fun NotesCard(
                 Icon(Icons.Filled.Star, "Favourite button.")
                 Icon(Icons.Filled.Delete, "Delete action button.")
             }
-
         }
     ) {
         Card(
